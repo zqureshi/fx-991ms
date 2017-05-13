@@ -11,15 +11,12 @@ generateOutput :: IO ()
 generateOutput = do
   parseTest expr "name Zeeshan"
   parseTest expr "number 9000"
-
--- grammar
--- Expr   ::= Name | Number
--- Name   ::= 'name' a
--- Number ::= 'number' a
+  parseTest expr "name Zeeshan, number 9000 , number 9001"
 
 data Expr
   = Name String
   | Number Integer
+  | Seq [Expr]
   deriving (Show)
 
 sc :: Parser ()
@@ -37,7 +34,7 @@ integer = lexeme L.integer
 name :: Parser Expr
 name = do
   symbol "name"
-  n <- some letterChar
+  n <- lexeme (some letterChar)
   return (Name n)
 
 number :: Parser Expr
@@ -47,4 +44,5 @@ number = do
   return (Number n)
 
 expr :: Parser Expr
-expr = between sc eof (name <|> number)
+expr = between sc eof (f <$> sepBy1 (name <|> number) (symbol ","))
+  where f l = if length l == 1 then head l else Seq l
